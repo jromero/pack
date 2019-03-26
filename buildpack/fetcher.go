@@ -30,20 +30,17 @@ func NewFetcher(cfg *config.Config, logger *logging.Logger) *Fetcher {
 	}
 }
 
-func (f *Fetcher) FetchBuildpack(builderDir string, b Buildpack) (Buildpack, error) {
-	var dir string
-
-	asURL, err := url.Parse(b.URI)
+// TODO : pass builder dir into the constructor ???
+// TODO : b buildpack should be pointer and this should only return an error
+func (f *Fetcher) FetchBuildpack(builderDir string, bp *Buildpack) error {
+	asURL, err := url.Parse(bp.URI)
 	if err != nil {
-		return Buildpack{}, err
+		return err
 	}
 
 	switch asURL.Scheme {
-	case "", // This is the only way to support relative filepaths
-		"file": // URIs with file:// protocol force the use of absolute paths. Host=localhost may be implied with file:///
-
+	case "", "file":
 		path := asURL.Path
-
 		if !asURL.IsAbs() && !filepath.IsAbs(path) {
 			path = filepath.Join(builderDir, path)
 		}
@@ -51,27 +48,29 @@ func (f *Fetcher) FetchBuildpack(builderDir string, b Buildpack) (Buildpack, err
 		if filepath.Ext(path) == ".tgz" {
 			file, err := os.Open(path)
 			if err != nil {
-				return Buildpack{}, errors.Wrapf(err, "could not open file to untar: %q", path)
+				return errors.Wrapf(err, "could not open file to untar: %q", path)
 			}
 			defer file.Close()
-			tmpDir, err := ioutil.TempDir("", fmt.Sprintf("create-builder-%s-", b.EscapedID()))
+
+			tmpDir, err := ioutil.TempDir("", fmt.Sprintf("create-builder-%s-", bp.EscapedID()))
 			if err != nil {
-				return Buildpack{}, fmt.Errorf(`failed to create temporary directory: %s`, err)
+				return fmt.Errorf(`failed to create temporary directory: %s`, err)
 			}
+
 			if err = archive.ExtractTarGZ(file, tmpDir); err != nil {
-				return Buildpack{}, err
+				return err
 			}
-			dir = tmpDir
+			bp.Dir = tmpDir
 		} else {
-			dir = path
+			bp.Dir = path
 		}
 	case "http", "https":
-		uriDigest := fmt.Sprintf("%x", sha256.Sum256([]byte(b.URI)))
+		uriDigest := fmt.Sprintf("%x", sha256.Sum256([]byte(bp.URI)))
 		cachedDir := filepath.Join(f.Config.Path(), "dl-cache", uriDigest)
 		_, err := os.Stat(cachedDir)
 		if os.IsNotExist(err) {
 			if err = os.MkdirAll(cachedDir, 0744); err != nil {
-				return Buildpack{}, err
+				return err
 			}
 		}
 		etagFile := cachedDir + ".etag"
@@ -81,34 +80,30 @@ func (f *Fetcher) FetchBuildpack(builderDir string, b Buildpack) (Buildpack, err
 			etag = string(bytes)
 		}
 
-		reader, etag, err := f.downloadAsStream(b.URI, etag)
+		reader, etag, err := f.downloadAsStream(bp.URI, etag)
 		if err != nil {
-			return Buildpack{}, errors.Wrapf(err, "failed to download from %q", b.URI)
+			return errors.Wrapf(err, "failed to download from %q", bp.URI)
 		} else if reader == nil {
 			// can use cached content
-			dir = cachedDir
+			bp.Dir = cachedDir
 			break
 		}
 		defer reader.Close()
 
 		if err = archive.ExtractTarGZ(reader, cachedDir); err != nil {
-			return Buildpack{}, err
+			return err
 		}
 
 		if err = ioutil.WriteFile(etagFile, []byte(etag), 0744); err != nil {
-			return Buildpack{}, err
+			return err
 		}
 
-		dir = cachedDir
+		bp.Dir = cachedDir
 	default:
-		return Buildpack{}, fmt.Errorf("unsupported protocol in URI %q", b.URI)
+		return fmt.Errorf("unsupported protocol in URI %q", bp.URI)
 	}
 
-	return Buildpack{
-		ID:     b.ID,
-		Latest: b.Latest,
-		Dir:    dir,
-	}, nil
+	return nil
 }
 
 func (f *Fetcher) downloadAsStream(uri string, etag string) (io.ReadCloser, string, error) {

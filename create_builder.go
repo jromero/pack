@@ -81,11 +81,11 @@ func (f *BuilderFactory) BuilderConfigFromFlags(ctx context.Context, flags Creat
 	// TODO : inject this
 	bpFetcher := buildpack.NewFetcher(f.Config, f.Logger)
 	for _, b := range builderTOML.Buildpacks {
-		bp, err := bpFetcher.FetchBuildpack(builderConfig.BuilderDir, b)
+		err := bpFetcher.FetchBuildpack(builderConfig.BuilderDir, &b)
 		if err != nil {
 			return BuilderConfig{}, err
 		}
-		builderConfig.Buildpacks = append(builderConfig.Buildpacks, bp)
+		builderConfig.Buildpacks = append(builderConfig.Buildpacks, b)
 	}
 	return builderConfig, nil
 }
