@@ -29,12 +29,7 @@ func testBuildpackFetcher(t *testing.T, when spec.G, it spec.S) {
 		)
 
 		it.Before(func() {
-
 			subject = buildpack.NewFetcher(nil, nil)
-		})
-
-		it.After(func() {
-
 		})
 
 		it("fetches from a relative directory", func() {
@@ -48,8 +43,8 @@ func testBuildpackFetcher(t *testing.T, when spec.G, it spec.S) {
 			}
 			h.AssertNil(t, subject.FetchBuildpack(".", &bp))
 			h.AssertNotEq(t, bp.Dir, "")
-			h.AssertDirContainsFileWithContents(t, bp.Dir, "bin/detect", "I come from a directory")
-			h.AssertDirContainsFileWithContents(t, bp.Dir, "bin/build", "I come from an archive")
+			h.AssertDirContainsFileWithContents(t, bp.Dir, "bin/detect", "I come from a directory\n")
+			h.AssertDirContainsFileWithContents(t, bp.Dir, "bin/build", "I come from a directory\n")
 		})
 
 		it("fetches from a relative tgz", func() {
@@ -63,8 +58,83 @@ func testBuildpackFetcher(t *testing.T, when spec.G, it spec.S) {
 			}
 			h.AssertNil(t, subject.FetchBuildpack(".", &bp))
 			h.AssertNotEq(t, bp.Dir, "")
-			h.AssertDirContainsFileWithContents(t, bp.Dir, "bin/detect", "I come from a directory")
-			h.AssertDirContainsFileWithContents(t, bp.Dir, "bin/build", "I come from an archive")
+			h.AssertDirContainsFileWithContents(t, bp.Dir, "bin/detect", "I come from an archive\n")
+			h.AssertDirContainsFileWithContents(t, bp.Dir, "bin/build", "I come from an archive\n")
+		})
+
+		it.Pend("fetches from an absolute directory", func() {
+			tmpDir, err := ioutil.TempDir("", "")
+			h.AssertNil(t, err)
+			defer os.RemoveAll(tmpDir)
+
+			bp := buildpack.Buildpack{
+				ID:  "bp.one",
+				URI: filepath.Join("testdata", "buildpack"),
+			}
+			h.AssertNil(t, subject.FetchBuildpack(".", &bp))
+			h.AssertNotEq(t, bp.Dir, "")
+			h.AssertDirContainsFileWithContents(t, bp.Dir, "bin/detect", "I come from a directory\n")
+			h.AssertDirContainsFileWithContents(t, bp.Dir, "bin/build", "I come from a directory\n")
+		})
+
+		it.Pend("fetches from an absolute tgz", func() {
+			tmpDir, err := ioutil.TempDir("", "")
+			h.AssertNil(t, err)
+			defer os.RemoveAll(tmpDir)
+
+			bp := buildpack.Buildpack{
+				ID:  "bp.one",
+				URI: filepath.Join("testdata", "buildpack.tgz"),
+			}
+			h.AssertNil(t, subject.FetchBuildpack(".", &bp))
+			h.AssertNotEq(t, bp.Dir, "")
+			h.AssertDirContainsFileWithContents(t, bp.Dir, "bin/detect", "I come from an archive\n")
+			h.AssertDirContainsFileWithContents(t, bp.Dir, "bin/build", "I come from an archive\n")
+		})
+
+		it.Pend("fetches from a 'file://' URI directory", func() {
+			tmpDir, err := ioutil.TempDir("", "")
+			h.AssertNil(t, err)
+			defer os.RemoveAll(tmpDir)
+
+			bp := buildpack.Buildpack{
+				ID:  "bp.one",
+				URI: filepath.Join("testdata", "buildpack"),
+			}
+			h.AssertNil(t, subject.FetchBuildpack(".", &bp))
+			h.AssertNotEq(t, bp.Dir, "")
+			h.AssertDirContainsFileWithContents(t, bp.Dir, "bin/detect", "I come from a directory\n")
+			h.AssertDirContainsFileWithContents(t, bp.Dir, "bin/build", "I come from a directory\n")
+		})
+
+		it.Pend("fetches from a 'file://' URI tgz", func() {
+			tmpDir, err := ioutil.TempDir("", "")
+			h.AssertNil(t, err)
+			defer os.RemoveAll(tmpDir)
+
+			bp := buildpack.Buildpack{
+				ID:  "bp.one",
+				URI: filepath.Join("testdata", "buildpack.tgz"),
+			}
+			h.AssertNil(t, subject.FetchBuildpack(".", &bp))
+			h.AssertNotEq(t, bp.Dir, "")
+			h.AssertDirContainsFileWithContents(t, bp.Dir, "bin/detect", "I come from an archive\n")
+			h.AssertDirContainsFileWithContents(t, bp.Dir, "bin/build", "I come from an archive\n")
+		})
+
+		it.Pend("fetches from a 'http(s)://' URI tgz", func() {
+			tmpDir, err := ioutil.TempDir("", "")
+			h.AssertNil(t, err)
+			defer os.RemoveAll(tmpDir)
+
+			bp := buildpack.Buildpack{
+				ID:  "bp.one",
+				URI: filepath.Join("testdata", "buildpack.tgz"),
+			}
+			h.AssertNil(t, subject.FetchBuildpack(".", &bp))
+			h.AssertNotEq(t, bp.Dir, "")
+			h.AssertDirContainsFileWithContents(t, bp.Dir, "bin/detect", "I come from an archive\n")
+			h.AssertDirContainsFileWithContents(t, bp.Dir, "bin/build", "I come from an archive\n")
 		})
 
 		//		when("a relative directory", func() {

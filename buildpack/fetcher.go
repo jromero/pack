@@ -18,6 +18,7 @@ import (
 // TODO : test this by itself, currently it is tested in create_builder_test.go
 // TODO : attempt to use this during build with the --buildpack flag to get tar.gz buildpacks
 // TODO : think of a better name for this construct
+// TODO : probably don't need a config here
 type Fetcher struct {
 	Config *config.Config
 	Logger *logging.Logger
@@ -30,8 +31,8 @@ func NewFetcher(cfg *config.Config, logger *logging.Logger) *Fetcher {
 	}
 }
 
-// TODO : pass builder dir into the constructor ???
-// TODO : b buildpack should be pointer and this should only return an error
+// TODO : pass builder dir (local buildpack search dir) into the constructor ???
+// TODO : bp should be builder.BuildpackMetadata and this should fetch buildpack.Metadata
 func (f *Fetcher) FetchBuildpack(builderDir string, bp *Buildpack) error {
 	asURL, err := url.Parse(bp.URI)
 	if err != nil {
