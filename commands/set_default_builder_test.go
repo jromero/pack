@@ -28,14 +28,14 @@ func testSetDefaultBuilderCommand(t *testing.T, when spec.G, it spec.S) {
 		logger         *logging.Logger
 		outBuf         bytes.Buffer
 		mockController *gomock.Controller
-		mockInspector  *cmdmocks.MockBuilderInspector
+		mockPackClient *cmdmocks.MockPackClient
 	)
 
 	it.Before(func() {
 		mockController = gomock.NewController(t)
-		mockInspector = cmdmocks.NewMockBuilderInspector(mockController)
+		mockPackClient = cmdmocks.NewMockPackClient(mockController)
 		logger = logging.NewLogger(&outBuf, &outBuf, false, false)
-		command = commands.SetDefaultBuilder(logger, mockInspector)
+		command = commands.SetDefaultBuilder(logger, mockPackClient)
 	})
 
 	it.After(func() {
@@ -63,7 +63,7 @@ func testSetDefaultBuilderCommand(t *testing.T, when spec.G, it spec.S) {
 			when("in local", func() {
 				it("sets default builder", func() {
 					imageName := "some/image"
-					mockInspector.EXPECT().InspectBuilder(imageName, true).Return(&pack.BuilderInfo{
+					mockPackClient.EXPECT().InspectBuilder(imageName, true).Return(&pack.BuilderInfo{
 						Stack: "test.stack.id",
 					}, nil)
 
@@ -77,9 +77,9 @@ func testSetDefaultBuilderCommand(t *testing.T, when spec.G, it spec.S) {
 				it("sets default builder", func() {
 					imageName := "some/image"
 
-					localCall := mockInspector.EXPECT().InspectBuilder(imageName, true).Return(nil, nil)
+					localCall := mockPackClient.EXPECT().InspectBuilder(imageName, true).Return(nil, nil)
 
-					mockInspector.EXPECT().InspectBuilder(imageName, false).Return(&pack.BuilderInfo{
+					mockPackClient.EXPECT().InspectBuilder(imageName, false).Return(&pack.BuilderInfo{
 						Stack: "test.stack.id",
 					}, nil).After(localCall)
 
@@ -94,7 +94,7 @@ func testSetDefaultBuilderCommand(t *testing.T, when spec.G, it spec.S) {
 			it("error is presented", func() {
 				imageName := "nonbuilder/image"
 
-				mockInspector.EXPECT().InspectBuilder(imageName, true).Return(
+				mockPackClient.EXPECT().InspectBuilder(imageName, true).Return(
 					nil,
 					fmt.Errorf("failed to inspect image %s", imageName))
 
@@ -109,11 +109,11 @@ func testSetDefaultBuilderCommand(t *testing.T, when spec.G, it spec.S) {
 			it("error is present", func() {
 				imageName := "nonexisting/image"
 
-				localCall := mockInspector.EXPECT().InspectBuilder(imageName, true).Return(
+				localCall := mockPackClient.EXPECT().InspectBuilder(imageName, true).Return(
 					nil,
 					nil)
 
-				mockInspector.EXPECT().InspectBuilder(imageName, false).Return(
+				mockPackClient.EXPECT().InspectBuilder(imageName, false).Return(
 					nil,
 					nil).After(localCall)
 
