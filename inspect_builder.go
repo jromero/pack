@@ -3,6 +3,7 @@ package pack
 import (
 	"github.com/buildpack/lifecycle/image"
 	"github.com/buildpack/pack/builder"
+	"github.com/buildpack/pack/style"
 	"github.com/pkg/errors"
 )
 
@@ -33,11 +34,11 @@ func (c *Client) InspectBuilder(name string, daemon bool) (*BuilderInfo, error) 
 		img, err = c.fetcher.FetchRemoteImage(name)
 	}
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get builder image '%s'", name)
+		return nil, errors.Wrapf(err, "failed to get builder image %s", style.Symbol(name))
 	}
 
 	if found, err := img.Found(); err != nil {
-		return nil, errors.Wrapf(err, "failed to find builder image '%s'", name)
+		return nil, errors.Wrapf(err, "failed to find builder image %s", style.Symbol(name))
 	} else if !found {
 		return nil, nil
 	}
@@ -46,17 +47,17 @@ func (c *Client) InspectBuilder(name string, daemon bool) (*BuilderInfo, error) 
 
 	stackID, err := bldr.GetStack()
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get stackID for builder image '%s'", name)
+		return nil, errors.Wrapf(err, "failed to get stack ID for builder image %s", style.Symbol(name))
 	}
 
 	metadata, err := bldr.GetMetadata()
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get metadata for builder image '%s'", name)
+		return nil, errors.Wrapf(err, "failed to get metadata for builder image %s", style.Symbol(name))
 	}
 
 	localMirrors, err := bldr.GetLocalRunImageMirrors()
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get local run image mirrors for builder image '%s'", name)
+		return nil, errors.Wrapf(err, "failed to get local run image mirrors for builder image %s", style.Symbol(name))
 	}
 
 	var buildpacks []BuildpackInfo

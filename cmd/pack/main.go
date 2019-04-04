@@ -49,7 +49,7 @@ func main() {
 	rootCmd.AddCommand(commands.CreateBuilder(&logger, &imageFetcher, &buildpackFetcher))
 	rootCmd.AddCommand(commands.SetRunImagesMirrors(&logger))
 	rootCmd.AddCommand(commands.InspectBuilder(&logger, &cfg, &client))
-	rootCmd.AddCommand(commands.SetDefaultBuilder(&logger))
+	rootCmd.AddCommand(commands.SetDefaultBuilder(&logger, &client))
 
 	rootCmd.AddCommand(commands.Version(&logger, Version))
 
