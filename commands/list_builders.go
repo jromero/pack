@@ -25,24 +25,31 @@ func ListBuilders(logger *logging.Logger, client PackClient) *cobra.Command {
 			}
 
 			logger.Info("Local builders:\n")
-			sort.Slice(listings, func(i, j int) bool {
-				// TODO handle empty tags
-				return listings[i].ImageSummary.RepoTags[0] < listings[j].ImageSummary.RepoTags[0]
-			})
 
-			tw := tabwriter.NewWriter(logger.RawWriter(), 10, 10, 5, ' ', tabwriter.TabIndent)
 
-			for _, v := range listings {
-				t := time.Unix(v.ImageSummary.Created, 0)
-				_, _ = tw.Write([]byte(fmt.Sprintf(
-					"\t%s\t%s\t%s\t\n",
-					strings.TrimPrefix(v.ImageSummary.ID, "sha256:")[:12],
-					style.Symbol(v.ImageSummary.RepoTags[0]),
-					style.Surpressed(t.Format("Jan _2 15:04:05")),
-				)))
+			if len(listings) > 0 {
+
+				sort.Slice(listings, func(i, j int) bool {
+					// TODO handle empty tags
+					return listings[i].ImageSummary.RepoTags[0] < listings[j].ImageSummary.RepoTags[0]
+				})
+
+				tw := tabwriter.NewWriter(logger.RawWriter(), 10, 10, 5, ' ', tabwriter.TabIndent)
+
+				for _, v := range listings {
+					t := time.Unix(v.ImageSummary.Created, 0)
+					_, _ = tw.Write([]byte(fmt.Sprintf(
+						"\t%s\t%s\t%s\t\n",
+						strings.TrimPrefix(v.ImageSummary.ID, "sha256:")[:12],
+						style.Symbol(v.ImageSummary.RepoTags[0]),
+						style.Surpressed(t.Format("Jan _2 15:04:05")),
+					)))
+				}
+
+				_ = tw.Flush()
+			} else {
+				logger.Info("\t** No builders found locally **")
 			}
-
-			_ = tw.Flush()
 
 			logger.Info("")
 			suggestBuilders(logger)
