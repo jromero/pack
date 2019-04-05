@@ -11,6 +11,7 @@ import (
 type Client struct {
 	config  *config.Config
 	logger  *logging.Logger
+	docker  Docker
 	fetcher Fetcher
 }
 
@@ -41,6 +42,7 @@ func DefaultClient(config *config.Config, logger *logging.Logger) (*Client, erro
 	return &Client{
 		config:  config,
 		logger:  logger,
+		docker: dockerClient,
 		fetcher: fetcher,
 	}, nil
 }

@@ -31,6 +31,8 @@ var Prefix = color.CyanString
 
 var TimestampColorCode = color.FgHiBlack
 
+var Surpressed = color.HiBlackString
+
 var Waiting = color.HiBlackString
 var Working = color.HiBlueString
 var Complete = color.GreenString
