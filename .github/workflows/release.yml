@@ -36,32 +36,30 @@ jobs:
               .then(workflows_result => workflows_result.data.workflows)
               .then(workflows => {
                 let matchingWorkflowIDs = workflows
-                  .filter(a => a.name === context.env.WORKFLOW_NAME && a.state === "active")
+                  .filter(a => a.name === "${{ env.WORKFLOW_NAME }}" && a.state === "active")
                   .map(a => a.id);
 
                 if (matchingWorkflowIDs.length === 0) {
-                  throw `no active workflows found with name ${context.env.WORKFLOW_NAME}`
+                  throw "no active workflows found with name ${{ env.WORKFLOW_NAME }}";
                 }
 
-                return matchingWorkflowIDs[0]
+                return matchingWorkflowIDs[0];
               })
               .then(workflowID => {
                 return github.actions.listRepoWorkflowRuns({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   workflow_id: workflowID,
-                  branch: context.env.WORKFLOW_NAME,
+                  branch: "${{ env.WORKFLOW_NAME }}",
                   event: "push",
                   status: "success"
-                }).map(results => results.data.workflow_runs)
+                }).map(results => results.data.workflow_runs);
               })
               .then(workflow_runs => {
                 let matchingRunIDs = workflow_runs.filter(run => run.head_sha === context.sha).map(run => run.id);
-
                 if (matchingRunIDs.length === 0) {
-                  throw "no successful workflow runs found for sha ${{ github.sha }}"
+                  throw `no successful workflow runs found for sha ${context.sha}`
                 }
-
                 return matchingRunIDs[0]
               })
               .then(workflowRunID => {
