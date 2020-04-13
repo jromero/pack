@@ -20,7 +20,6 @@ jobs:
         run: echo "::set-env name=VERSION::$(echo '${{ github.ref }}' | sed 's/v*//')"
       - name: Determine asset URLs for revision
         id: assets_urls
-        if: matrix.lifecycle_kind == 'current'
         uses: actions/github-script@0.9.0
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
