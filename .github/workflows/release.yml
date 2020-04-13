@@ -21,61 +21,62 @@ jobs:
       - name: Determine asset URLs for revision
         id: assets_urls
         uses: actions/github-script@0.9.0
+        env:
+          WORKFLOW_NAME: build
+          RELEASE_BRANCH: release/${VERSION}
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           result-encoding: string
           script: |
             return github.actions
               .listRepoWorkflows({
-                 owner: "${{ env.GITHUB_OWNER }}",
-                 repo: "pack",
+                 owner: context.repo.owner,
+                 repo: context.repo.repo,
               })
-              .then(workflows_result => {
-                let workflows = workflows_result.data.workflows
-                  .filter(a => a.name === "build" && a.state === "active")
+              .then(workflows_result => workflows_result.data.workflows)
+              .then(workflows => {
+                let matchingWorkflowIDs = workflows
+                  .filter(a => a.name === "${WORKFLOW_NAME}" && a.state === "active")
                   .map(a => a.id);
 
-                if (workflows.length === 0) {
-                  throw "no active workflows found with name build"
+                if (matchingWorkflowIDs.length === 0) {
+                  throw "no active workflows found with name ${WORKFLOW_NAME}"
                 }
 
-                return workflows[0]
+                return matchingWorkflowIDs[0]
               })
-              .then(workflow_id => {
+              .then(workflowID => {
                 return github.actions.listRepoWorkflowRuns({
-                  owner: "${{ env.GITHUB_OWNER }}",
-                  repo: "pack",
-                  workflow_id: workflow_id,
-                  branch: "release/$VERSION",
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  workflow_id: workflowID,
+                  branch: "${RELEASE_BRANCH}",
                   event: "push",
                   status: "success"
-                })
+                }).map(results => results.data.workflow_runs)
               })
-              .then(workflow_runs_result => {
-                let workflow_runs = workflow_runs_result.data.workflow_runs
-                  .filter(run => run.head_sha === "${{ github.sha }}");
+              .then(workflow_runs => {
+                let matchingRunIDs = workflow_runs.filter(run => run.head_sha === "${{ github.sha }}").map(run => run.id);
 
-                if (workflow_runs.length === 0) {
+                if (matchingRunIDs.length === 0) {
                   throw "no successful workflow runs found for sha ${{ github.sha }}"
                 }
 
-                return workflow_runs[0].id
+                return matchingRunIDs[0]
               })
-              .then(workflow_runid => {
+              .then(workflowRunID => {
                 return github.actions.listWorkflowRunArtifacts({
-                  owner: "${{ env.GITHUB_OWNER }}",
-                  repo: "pack",
-                  run_id: workflow_runid
-                })
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  run_id: workflowRunID
+                }).map(result => result.data.artifacts)
               })
-              .then(artifacts_result => {
-                let urls = artifacts_result.data.artifacts;
-
-                if (urls.length === 0) {
+              .then(artifacts => {
+                if (artifacts.length === 0) {
                   throw "no artifacts found"
                 }
-
-                return urls
+            
+                return artifacts
               })
 #      - name: Create Release
 #        id: create_release
