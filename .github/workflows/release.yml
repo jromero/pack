@@ -52,7 +52,8 @@ jobs:
                   workflow_id: workflowID,
                   branch: "${{ env.RELEASE_BRANCH }}",
                   event: "push",
-                  status: "success"
+                  status: "completed",
+                  conclusion: "success"
                 }).then(results => results.data.workflow_runs);
               })
               .then(workflow_runs => {
