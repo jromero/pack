@@ -25,10 +25,10 @@ jobs:
             runner: ubuntu-latest
             no_docker: "false"
             pack_bin: pack
-          - os: windows
-            runner: [self-hosted, windows]
-            no_docker: "false"
-            pack_bin: pack.exe
+#          - os: windows
+#            runner: [self-hosted, windows]
+#            no_docker: "false"
+#            pack_bin: pack.exe
     runs-on: ${{ matrix.runner }}
     env:
       PACK_BIN: ${{ matrix.pack_bin }}
