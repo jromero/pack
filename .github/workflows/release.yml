@@ -2,11 +2,8 @@ name: release
 
 on:
   push:
-    branch:
-      - 'feature/**'
-#    tags:
-#      # Push events to matching v*, i.e. v1.0, v20.15.10
-#      - 'v*'
+    tags:
+      - 'v*'
 
 jobs:
   release:
@@ -23,7 +20,7 @@ jobs:
         uses: actions/github-script@0.9.0
         env:
           WORKFLOW_NAME: build
-          RELEASE_BRANCH: release/${{ env.VERSION }}
+#          RELEASE_BRANCH: release/${{ env.VERSION }} # TODO: makes it more bound to the branch name that we'd like
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           result-encoding: string
@@ -50,16 +47,17 @@ jobs:
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   workflow_id: workflowID,
-                  branch: "${{ env.RELEASE_BRANCH }}",
+                  // branch: "${{ env.RELEASE_BRANCH }}",
                   event: "push",
                   status: "completed",
                   conclusion: "success"
                 }).then(results => results.data.workflow_runs);
               })
               .then(workflow_runs => {
+                // let branchName = "${{ env.RELEASE_BRANCH }}";
                 let matchingRunIDs = workflow_runs.filter(run => run.head_sha === context.sha).map(run => run.id);
                 if (matchingRunIDs.length === 0) {
-                  throw `no successful workflow runs found for sha ${context.sha}`
+                  throw `no successful workflow runs found for sha: '${context.sha}'`;
                 }
                 return matchingRunIDs[0]
               })
