@@ -14,148 +14,148 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Debug
-        run: export
-#      - name: Parse version
-#        run: echo "::set-env name=VERSION::$(echo '${{ github.ref }}' | sed 's/v*//')"
-#      - name: Determine asset URLs for revision
-#        id: latest-lifecycle-url
-#        if: matrix.lifecycle_kind == 'current'
-#        uses: actions/github-script@0.9.0
-#        with:
-#          github-token: ${{secrets.GITHUB_TOKEN}}
-#          result-encoding: string
-#          script: |
-#            return github.actions
-#              .listRepoWorkflows({
-#                 owner: "buildpacks",
-#                 repo: "pack",
-#              })
-#              .then(workflows_result => {
-#                let workflows = workflows_result.data.workflows
-#                  .filter(a => a.name === "build" && a.state === "active")
-#                  .map(a => a.id);
-#
-#                if (workflows.length === 0) {
-#                  throw "no active workflows found with name build"
-#                }
-#
-#                return workflows[0]
-#              })
-#              .then(workflow_id => {
-#                return github.actions.listRepoWorkflowRuns({
-#                  owner: "buildpacks",
-#                  repo: "lifecycle",
-#                  workflow_id: workflow_id,
-#                  branch: "release/${{ github.ref }}",
-#                  event: "push"
-#                })
-#              })
-#              .then(workflow_runs_result => {
-#                let workflow_runs = workflow_runs_result.data.workflow_runs
-#                  .filter(run => run.conclusion === "success");
-#
-#                if (workflow_runs.length === 0) {
-#                  throw "no successful workflow runs found for lifecycle master branch"
-#                }
-#
-#                return workflow_runs[0].id
-#              })
-#              .then(workflow_runid => {
-#                return github.actions.listWorkflowRunArtifacts({
-#                  owner: "buildpacks",
-#                  repo: "lifecycle",
-#                  run_id: workflow_runid
-#                })
-#              })
-#              .then(artifacts_result => {
-#                let urls = artifacts_result.data.artifacts
-#                  .filter(artifact => artifact.name.includes("linux"))
-#                  .map(artifact => artifact.archive_download_url);
-#
-#                if (urls.length === 0) {
-#                  throw "no artifacts found"
-#                }
-#
-#                return urls[0]
-#              })
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@latest
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo ${{ github.sha }}
+      - name: Parse version
+        run: echo "::set-env name=VERSION::$(echo '${{ github.ref }}' | sed 's/v*//')"
+      - name: Determine asset URLs for revision
+        id: assets_urls
+        if: matrix.lifecycle_kind == 'current'
+        uses: actions/github-script@0.9.0
         with:
-          tag_name: ${{ github.ref }}
-          release_name: pack ${{ github.ref }}
-          draft: true
-          prerelease: false
-          body: |
-            # pack ${{ github.ref }}
-            > This is a **beta** release of the Cloud Native Buildpack local CLI. This platform implementation should be relatively stable and reliable, but breaking changes in the underlying [specification](https://github.com/buildpack/spec) may be implemented without notice. Note that pack is intended for local image builds, and thus requires a Docker daemon. The [lifecycle](https://github.com/buildpack/lifecycle) should be used directly when building on cloud platforms.
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          result-encoding: string
+          script: |
+            return github.actions
+              .listRepoWorkflows({
+                 owner: "$GITHUB_OWNER",
+                 repo: "pack",
+              })
+              .then(workflows_result => {
+                let workflows = workflows_result.data.workflows
+                  .filter(a => a.name === "build" && a.state === "active")
+                  .map(a => a.id);
 
-            ## Prerequisites
+                if (workflows.length === 0) {
+                  throw "no active workflows found with name build"
+                }
 
-            - The [Docker daemon](https://www.docker.com/get-started) must be installed on your workstation or accessible over the network.
+                return workflows[0]
+              })
+              .then(workflow_id => {
+                return github.actions.listRepoWorkflowRuns({
+                  owner: "$GITHUB_OWNER",
+                  repo: "pack",
+                  workflow_id: workflow_id,
+                  branch: "release/$VERSION",
+                  event: "push",
+                  status: "success"
+                })
+              })
+              .then(workflow_runs_result => {
+                let workflow_runs = workflow_runs_result.data.workflow_runs
+                  .filter(run => run.head_sha === "${{ github.sha }}");
 
-            ## Install
+                if (workflow_runs.length === 0) {
+                  throw "no successful workflow runs found for sha ${{ github.sha }}"
+                }
 
-            If you're on macOS, you can use Homebrew:
+                return workflow_runs[0].id
+              })
+              .then(workflow_runid => {
+                return github.actions.listWorkflowRunArtifacts({
+                  owner: "$GITHUB_OWNER",
+                  repo: "pack",
+                  run_id: workflow_runid
+                })
+              })
+              .then(artifacts_result => {
+                let urls = artifacts_result.data.artifacts;
 
-            ```bash
-            $ brew install buildpacks/tap/pack
-            ```
+                if (urls.length === 0) {
+                  throw "no artifacts found"
+                }
 
-            Otherwise:
-
-            1. Download the `.tgz` or `.zip` file for your platform
-            2. Extract the `pack` binary
-            3. (Optional) Add the directory containing `pack` to `PATH`, or copy `pack` to a directory like `/usr/local/bin`
-
-            ## Run
-
-            Run the command `pack`.
-
-            You should see the following output
-
-            ```
-            Usage:
-              pack [command]
-
-            Available Commands:
-              build                 Generate app image from source code
-              rebase                Rebase app image with latest run image
-              inspect-image         Show information about a built image
-              create-builder        Create builder image
-              package-buildpack     Package buildpack
-              set-run-image-mirrors Set mirrors to other repositories for a given run image
-              inspect-builder       Show information about a builder
-              set-default-builder   Set default builder used by other commands
-              suggest-builders      Display list of recommended builders
-              suggest-stacks        Display list of recommended stacks
-              version               Show current 'pack' version
-              report                Display useful information for reporting an issue
-              completion            Outputs completion script location
-              help                  Help about any command
-
-            Flags:
-              -h, --help         Help for 'pack'
-              --no-color     Disable color output
-              -q, --quiet        Show less output
-              --timestamps   Enable timestamps in output
-              -v, --verbose      Show more output
-              --version      Show current 'pack' version
-
-              Use "pack [command] --help" for more information about a command.
-            ```
-
-            ## Info
-
-            Builders created with this release of the pack CLI continue to contain [lifecycle v0.6.1](https://github.com/buildpack/lifecycle/releases/tag/v0.6.1) by default.
-
-            ## Features
-
-            ## Fixes
-
-            ## Breaking Changes
+                return urls
+              })
+#      - name: Create Release
+#        id: create_release
+#        uses: actions/create-release@latest
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          tag_name: ${{ github.ref }}
+#          release_name: pack ${{ github.ref }}
+#          draft: true
+#          prerelease: false
+#          body: |
+#            # pack ${{ github.ref }}
+#            > This is a **beta** release of the Cloud Native Buildpack local CLI. This platform implementation should be relatively stable and reliable, but breaking changes in the underlying [specification](https://github.com/buildpack/spec) may be implemented without notice. Note that pack is intended for local image builds, and thus requires a Docker daemon. The [lifecycle](https://github.com/buildpack/lifecycle) should be used directly when building on cloud platforms.
+#
+#            ## Prerequisites
+#
+#            - The [Docker daemon](https://www.docker.com/get-started) must be installed on your workstation or accessible over the network.
+#
+#            ## Install
+#
+#            If you're on macOS, you can use Homebrew:
+#
+#            ```bash
+#            $ brew install buildpacks/tap/pack
+#            ```
+#
+#            Otherwise:
+#
+#            1. Download the `.tgz` or `.zip` file for your platform
+#            2. Extract the `pack` binary
+#            3. (Optional) Add the directory containing `pack` to `PATH`, or copy `pack` to a directory like `/usr/local/bin`
+#
+#            ## Run
+#
+#            Run the command `pack`.
+#
+#            You should see the following output
+#
+#            ```
+#            Usage:
+#              pack [command]
+#
+#            Available Commands:
+#              build                 Generate app image from source code
+#              rebase                Rebase app image with latest run image
+#              inspect-image         Show information about a built image
+#              create-builder        Create builder image
+#              package-buildpack     Package buildpack
+#              set-run-image-mirrors Set mirrors to other repositories for a given run image
+#              inspect-builder       Show information about a builder
+#              set-default-builder   Set default builder used by other commands
+#              suggest-builders      Display list of recommended builders
+#              suggest-stacks        Display list of recommended stacks
+#              version               Show current 'pack' version
+#              report                Display useful information for reporting an issue
+#              completion            Outputs completion script location
+#              help                  Help about any command
+#
+#            Flags:
+#              -h, --help         Help for 'pack'
+#              --no-color     Disable color output
+#              -q, --quiet        Show less output
+#              --timestamps   Enable timestamps in output
+#              -v, --verbose      Show more output
+#              --version      Show current 'pack' version
+#
+#              Use "pack [command] --help" for more information about a command.
+#            ```
+#
+#            ## Info
+#
+#            Builders created with this release of the pack CLI continue to contain [lifecycle v0.6.1](https://github.com/buildpack/lifecycle/releases/tag/v0.6.1) by default.
+#
+#            ## Features
+#
+#            ## Fixes
+#
+#            ## Breaking Changes
 #      - name: Upload Release Asset
 #        id: upload_release_assets
 #        uses: actions/upload-release-asset@v1
