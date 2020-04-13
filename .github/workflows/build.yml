@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [darwin, linux, windows]
+        os: [darwin, linux] # windows
         include:
           - os: darwin
             runner: macos-latest
