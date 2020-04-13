@@ -23,9 +23,9 @@ jobs:
         uses: actions/github-script@0.9.0
         env:
           WORKFLOW_NAME: build
-          RELEASE_BRANCH: release/${VERSION}
+          RELEASE_BRANCH: release/${{ env.VERSION }}
         with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           result-encoding: string
           script: |
             return github.actions
@@ -50,10 +50,10 @@ jobs:
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   workflow_id: workflowID,
-                  branch: "${{ env.WORKFLOW_NAME }}",
+                  branch: "${{ env.RELEASE_BRANCH }}",
                   event: "push",
                   status: "success"
-                }).map(results => results.data.workflow_runs);
+                }).then(results => results.data.workflow_runs);
               })
               .then(workflow_runs => {
                 let matchingRunIDs = workflow_runs.filter(run => run.head_sha === context.sha).map(run => run.id);
@@ -67,7 +67,7 @@ jobs:
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   run_id: workflowRunID
-                }).map(result => result.data.artifacts)
+                }).then(result => result.data.artifacts)
               })
               .then(artifacts => {
                 if (artifacts.length === 0) {
