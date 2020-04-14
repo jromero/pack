@@ -25,7 +25,7 @@ jobs:
           curl -s -L \
             --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
             -o pack-darwin.zip \
-            ${{ parseJSON(steps.assets_urls.outputs.result).darwin }}
+            ${{ steps.assets_urls.outputs.result.darwin }}
           unzip pack-darwin.zip -d pack-darwin
           chmod +x pack-darwin/pack
           tar -C pack-darwin -vzcf pack-darwin.tgz pack
@@ -34,7 +34,7 @@ jobs:
           curl -s -L \
             --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
             -o pack-linux.zip \
-            ${{ parseJSON(steps.assets_urls.outputs.result).linux }}
+            ${{ steps.assets_urls.outputs.result.linux }}
           unzip pack-linux.zip -d pack-linux
           chmod +x pack-linux/pack
           tar -C pack-linux -vzcf pack-linux.tgz pack
