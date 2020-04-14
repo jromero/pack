@@ -20,7 +20,8 @@ jobs:
                darwin: 'https://api.github.com/repos/jromero/pack/actions/artifacts/4313844/zip',
                linux: 'https://api.github.com/repos/jromero/pack/actions/artifacts/4313845/zip'
              }
-      - id: darwin_arifact
+      - name: Resolved artifact URL - darwin
+        id: darwin_arifact
         uses: gr2m/get-json-paths-action@v1.x
         with:
           json: ${{ steps.assets_urls.outputs.result }}
@@ -34,7 +35,8 @@ jobs:
           unzip pack-darwin.zip -d pack-darwin
           chmod +x pack-darwin/pack
           tar -C pack-darwin -vzcf pack-darwin.tgz pack
-      - id: linux_arifact
+      - name: Resolved artifact URL - linux
+        id: linux_arifact
         uses: gr2m/get-json-paths-action@v1.x
         with:
           json: ${{ steps.assets_urls.outputs.result }}
