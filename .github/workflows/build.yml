@@ -25,10 +25,10 @@ jobs:
             runner: ubuntu-latest
             no_docker: "false"
             pack_bin: pack
-#          - os: windows
-#            runner: [self-hosted, windows]
-#            no_docker: "false"
-#            pack_bin: pack.exe
+    #          - os: windows
+    #            runner: [self-hosted, windows]
+    #            no_docker: "false"
+    #            pack_bin: pack.exe
     runs-on: ${{ matrix.runner }}
     env:
       PACK_BIN: ${{ matrix.pack_bin }}
@@ -47,8 +47,8 @@ jobs:
         # disabled for windows due to format verification failing
         if: matrix.os != 'windows'
         run: make verify
-#      - name: Test
-#        run: make test
+      #      - name: Test
+      #        run: make test
       - name: Derive pack version from branch name
         run: |
           [[ $GITHUB_REF =~ ^refs\/heads\/release/(.*)$ ]] && version=${BASH_REMATCH[1]} || version=0.0.0
@@ -62,3 +62,12 @@ jobs:
         with:
           name: pack-${{ matrix.os }}
           path: out/${{ env.PACK_BIN }}
+  release:
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v1
+        with:
+          name: pack-darwin
+      - run: ls pack-darwin
