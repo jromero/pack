@@ -97,7 +97,7 @@ jobs:
       - name: Extract pack info
         id: pack_info
         run: |
-          LIFECYCLE_VERSION=$(./pack-linux/pack | grep 'Default Lifecycle Version:' | grep -o '[^ ]*$') || "X.X.X"
+          LIFECYCLE_VERSION=$(./pack-linux/pack report | grep 'Default Lifecycle Version:' | grep -o '[^ ]*$' || "X.X.X")
           PACK_HELP=$(./pack-linux/pack)
           PACK_HELP="${PACK_HELP//'%'/'%25'}"
           PACK_HELP="${PACK_HELP//$'\n'/'%0A'}"
