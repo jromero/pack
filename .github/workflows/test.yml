@@ -15,7 +15,6 @@ jobs:
           WORKFLOW_NAME: build
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          result-encoding: string
           script: |
             return {
              darwin: {
