@@ -103,11 +103,11 @@ jobs:
                 }
               });
       - name: Resolved artifact URL - darwin
-          id: darwin_arifact
-          uses: gr2m/get-json-paths-action@v1.x
-          with:
-            json: ${{ steps.assets_urls.outputs.result }}
-            url: "darwin"
+        id: darwin_arifact
+        uses: gr2m/get-json-paths-action@v1.x
+        with:
+          json: ${{ steps.assets_urls.outputs.result }}
+          url: "darwin"
       - name: Download artifact - darwin
         run: |
           curl -s -L \
