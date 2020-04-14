@@ -103,8 +103,7 @@ jobs:
           PACK_HELP="${PACK_HELP//'%'/'%25'}"
           PACK_HELP="${PACK_HELP//$'\n'/'%0A'}"
           PACK_HELP="${PACK_HELP//$'\r'/'%0D'}"
-          echo "::set-output name=lifecycle_version::$LIFECYCLE_VERSION"
-          echo "::set-output name=help::$PACK_HELP"
+          echo "::set-output name=lifecycle_version::$LIFECYCLE_VERSION,name=help::$PACK_HELP"
       - name: Create Release
         id: create_release
         uses: actions/create-release@latest
