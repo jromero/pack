@@ -93,17 +93,17 @@ jobs:
                   .then(result => log(result.data.artifacts))
               })
               .then(artifacts => {
-                let findForPlatform = (platform) => {
+                let artifactUrlForPlatform = (platform) => {
                   let artifact = artifacts.find(a => a.name.includes(platform));
                   if (!artifact) {
                     throw `unable to find artifact for '${platform}'`;
                   }
-                  return artifact;
+                  return artifact.archive_download_url;
                 };
 
                 return {
-                  darwin: findForPlatform("darwin"),
-                  linux: findForPlatform("linux"),
+                  darwin: artifactUrlForPlatform("darwin"),
+                  linux: artifactUrlForPlatform("linux"),
                   // windows: findForPlatform("windows"),
                 }
               });

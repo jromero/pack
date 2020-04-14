@@ -1,10 +1,10 @@
 name: build
 
 on:
-  push:
-    branches:
-      - master
-      - 'release/**'
+#  push:
+#    branches:
+#      - master
+#      - 'release/**'
   pull_request:
     branches:
       - master
