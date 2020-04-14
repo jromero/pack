@@ -10,6 +10,11 @@ jobs:
     name: Create Release
     runs-on: ubuntu-latest
     steps:
+      - name: Derive version from tag
+        run: |
+          [[ $GITHUB_REF =~ ^refs\/tags\/(.*)$ ]] && VERSION=${BASH_REMATCH[1]} 
+          echo "::set-env name=PACK_VERSION::${VERSION}"
+        shell: bash
       - name: Determine asset URLs for revision
         id: assets_urls
         uses: actions/github-script@0.9.0
@@ -150,11 +155,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
-          release_name: pack ${{ github.ref }}
+          release_name: pack ${{ env.PACK_VERSION }}
           draft: true
           prerelease: false
           body: |
-            # pack ${{ github.ref }}
+            # pack ${{ env.PACK_VERSION }}
             > This is a **beta** release of the Cloud Native Buildpack local CLI. This platform implementation should be relatively stable and reliable, but breaking changes in the underlying [specification](https://github.com/buildpack/spec) may be implemented without notice. Note that pack is intended for local image builds, and thus requires a Docker daemon. The [lifecycle](https://github.com/buildpack/lifecycle) should be used directly when building on cloud platforms.
 
             ## Prerequisites
@@ -202,7 +207,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} 
           asset_path: ./pack-darwin.tgz
-          asset_name: pack-${{ github.ref }}-darwin.tgz
+          asset_name: pack-${{ env.PACK_VERSION }}-darwin.tgz
           asset_content_type: application/gzip
       - name: Upload Release Asset - linux
         uses: actions/upload-release-asset@v1
@@ -211,5 +216,5 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./pack-linux.tgz
-          asset_name: pack-${{ github.ref }}-linux.tgz
+          asset_name: pack-${{ env.PACK_VERSION }}-linux.tgz
           asset_content_type: application/gzip

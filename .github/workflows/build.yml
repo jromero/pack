@@ -47,8 +47,8 @@ jobs:
         # disabled for windows due to format verification failing
         if: matrix.os != 'windows'
         run: make verify
-      - name: Test
-        run: make test
+#      - name: Test
+#        run: make test
       - name: Derive pack version from branch name
         run: |
           [[ $GITHUB_REF =~ ^refs\/heads\/release/(.*)$ ]] && version=${BASH_REMATCH[1]} || version=0.0.0
