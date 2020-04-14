@@ -45,7 +45,7 @@ jobs:
           curl -s -L \
             --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
             -o pack-darwin.zip \
-            ${{ steps.assets_urls.outputs.result.darwin }}
+            ${{ steps.assets_urls.outputs.result }}
           unzip pack-darwin.zip -d pack-darwin
           chmod +x pack-darwin/pack
           tar -C pack-darwin -vzcf pack-darwin.tgz pack
