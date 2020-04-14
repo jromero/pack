@@ -62,13 +62,14 @@ jobs:
                   repo: context.repo.repo,
                   workflow_id: workflowID,
                   event: "push",
-                  status: "success"
+                  status: "completed"
                 }).then(results => log(results.data.workflow_runs));
               })
               .then(workflow_runs => {
                 console.log(`Searching through ${workflow_runs.length} workflow runs for our commit...`);
                 let matchingRunIDs = workflow_runs
                   .filter(run => run.head_sha === context.sha)
+                  .filter(run => run.conclusion === "success")
                   .map(log)
                   .map(run => run.id);
 
