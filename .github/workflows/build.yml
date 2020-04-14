@@ -94,16 +94,19 @@ jobs:
           tar -C pack-linux -vzcf pack-linux.tgz pack
 #      - name: Package artifacts - windows
 #        run: zip -j pack-windows.zip pack-windows/pack
-      - name: Extract pack info
-        id: pack_info
-#        run: ./pack-linux/pack report
+      - name: Extract lifecycle version
+        id: lifecycle_version
         run: |
-          LIFECYCLE_VERSION=$(./pack-linux/pack report | grep 'Default Lifecycle Version:' | grep -o '[^ ]*$' || "X.X.X")
+          LIFECYCLE_VERSION=$(./pack-linux/pack report | grep 'Default Lifecycle Version:' | grep -o '[^ ]*$')
+          echo "::set-output name=version::$LIFECYCLE_VERSION"
+      - name: Extract pack help
+        id: pack_help
+        run: |
           PACK_HELP=$(./pack-linux/pack --help)
           PACK_HELP="${PACK_HELP//'%'/'%25'}"
           PACK_HELP="${PACK_HELP//$'\n'/'%0A'}"
           PACK_HELP="${PACK_HELP//$'\r'/'%0D'}"
-          echo "::set-output name=lifecycle_version::$LIFECYCLE_VERSION,name=help::$PACK_HELP"
+          echo "::set-output name=help::$PACK_HELP"
       - name: Create Release
         id: create_release
         uses: actions/create-release@latest
@@ -143,12 +146,12 @@ jobs:
             You should see the following output
 
             ```text
-            ${{ steps.pack_info.outputs.help }}
+            ${{ steps.pack_help.outputs.help }}
             ```
 
             ## Info
 
-            Builders created with this release of the pack CLI continue to contain [lifecycle v${{ steps.pack_info.outputs.lifeycle_version }}](https://github.com/buildpack/lifecycle/releases/tag/v${{ steps.pack_info.outputs.lifeycle_version }}) by default.
+            Builders created with this release of the pack CLI continue to contain [lifecycle v${{ steps.lifecycle_version.outputs.version }}](https://github.com/buildpack/lifecycle/releases/tag/v${{ steps.lifecycle_version.outputs.version }}) by default.
 
             ## Features
 
