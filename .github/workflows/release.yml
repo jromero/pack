@@ -25,56 +25,112 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           result-encoding: string
           script: |
-            return github.actions
-              .listRepoWorkflows({
-                 owner: context.repo.owner,
-                 repo: context.repo.repo,
+            const WORKFLOW_NAME = "build";
+            const DEBUG = false;
+
+            const log = (data) => {
+              DEBUG && console.log(data);
+              return data
+            };
+
+            return Promise.resolve()
+              .then(() => {
+                console.log("Getting list of repo workflows...");
+                return github.actions
+                  .listRepoWorkflows({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                  })
+                  .then(workflows_result => log(workflows_result.data.workflows))
               })
-              .then(workflows_result => workflows_result.data.workflows)
               .then(workflows => {
+                console.log(`Searching for active workflow with name ${WORKFLOW_NAME}...`);
                 let matchingWorkflowIDs = workflows
-                  .filter(a => a.name === "${{ env.WORKFLOW_NAME }}" && a.state === "active")
+                  .filter(a => a.name === WORKFLOW_NAME && a.state === "active")
                   .map(a => a.id);
 
-                if (matchingWorkflowIDs.length === 0) {
-                  throw "no active workflows found with name ${{ env.WORKFLOW_NAME }}";
+                if (matchingWorkflowIDs.length !== 1) {
+                  throw `expected 1 active workflows with name '${WORKFLOW_NAME}', found ${matchingWorkflowIDs.length}`;
                 }
 
                 return matchingWorkflowIDs[0];
               })
               .then(workflowID => {
-                return github.actions.listRepoWorkflowRuns({
+                console.log(`Looking up runs associated with workflow ID ${workflowID}...`);
+                return github.actions.listWorkflowRuns({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   workflow_id: workflowID,
-                  // branch: "${{ env.RELEASE_BRANCH }}",
                   event: "push",
-                  status: "completed",
-                  conclusion: "success"
-                }).then(results => results.data.workflow_runs);
+                  status: "success"
+                }).then(results => log(results.data.workflow_runs));
               })
               .then(workflow_runs => {
-                // let branchName = "${{ env.RELEASE_BRANCH }}";
-                let matchingRunIDs = workflow_runs.filter(run => run.head_sha === context.sha).map(run => run.id);
+                console.log(`Searching through ${workflow_runs.length} workflow runs for our commit...`);
+                let matchingRunIDs = workflow_runs
+                  .filter(run => run.head_sha === context.sha)
+                  .map(log)
+                  .map(run => run.id);
+
                 if (matchingRunIDs.length === 0) {
                   throw `no successful workflow runs found for sha: '${context.sha}'`;
                 }
+
+                if (matchingRunIDs.length > 1) {
+                  console.log("Found multiple matching run IDs:", matchingRunIDs);
+                }
+
                 return matchingRunIDs[0]
               })
               .then(workflowRunID => {
+                console.log(`Looking up artifacts for run ID ${workflowRunID}...`);
+
                 return github.actions.listWorkflowRunArtifacts({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   run_id: workflowRunID
-                }).then(result => result.data.artifacts)
+                })
+                  .then(result => log(result.data.artifacts))
               })
               .then(artifacts => {
-                if (artifacts.length === 0) {
-                  throw "no artifacts found"
+                let findForPlatform = (platform) => {
+                  let artifact = artifacts.find(a => a.name.includes(platform));
+                  if (!artifact) {
+                    throw `unable to find artifact for '${platform}'`;
+                  }
+                  return artifact;
+                };
+
+                return {
+                  darwin: findForPlatform("darwin"),
+                  linux: findForPlatform("linux"),
+                  // windows: findForPlatform("windows"),
                 }
-            
-                return artifacts
-              })
+              });
+      - name: Download artifact - darwin
+        run: |
+          curl -s -L \
+            --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+            -o pack-darwin.zip \
+            ${{ steps.assets_urls.outputs.result.darwin }}
+          unzip pack-darwin.zip -d pack-darwin
+          chmod +x pack-darwin/pack
+          tar -C pack-darwin -vzcf pack-darwin.tgz pack
+      - name: Download artifact - linux
+        run: |
+          curl -s -L \
+            --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+            -o pack-linux.zip \
+            ${{ steps.assets_urls.outputs.result.linux }}
+          unzip pack-linux.zip -d pack-linux
+          chmod +x pack-linux/pack
+          tar -C pack-linux -vzcf pack-linux.tgz pack
+#      - name: Download artifact - windows
+#        run: |
+#          curl -s -L \
+#            --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+#            -o pack-windows.zip \
+#            ${{ steps.assets_urls.outputs.result.windows }}
 #      - name: Create Release
 #        id: create_release
 #        uses: actions/create-release@latest
