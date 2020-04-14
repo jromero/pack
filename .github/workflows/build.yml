@@ -69,7 +69,7 @@ jobs:
     steps:
       - name: Derive pack version from branch name
         run: |
-          [[ $GITHUB_REF =~ ^refs\/heads\/release/(.*)$ ]] && version=${BASH_REMATCH[1]} || version=0.0.0
+          [[ $GITHUB_REF =~ ^refs\/heads\/release/(.*)$ ]] && version=${BASH_REMATCH[1]}
           echo "::set-env name=PACK_VERSION::$version"
         shell: bash
       - name: Download artifacts - darwin
@@ -94,6 +94,16 @@ jobs:
           tar -C pack-linux -vzcf pack-linux.tgz pack
 #      - name: Package artifacts - windows
 #        run: zip -j pack-windows.zip pack-windows/pack
+      - name: Extract pack info
+        id: pack_info
+        run: |
+          LIFECYCLE_VERSION=$(./pack-linux/pack | grep 'Default Lifecycle Version:' | grep -o '[^ ]*$') || "X.X.X"
+          PACK_HELP=$(./pack-linux/pack)
+          PACK_HELP="${PACK_HELP//'%'/'%25'}"
+          PACK_HELP="${PACK_HELP//$'\n'/'%0A'}"
+          PACK_HELP="${PACK_HELP//$'\r'/'%0D'}"
+          echo "::set-output name=lifecycle_version::LIFECYCLE_VERSION"
+          echo "::set-output name=help::$PACK_HELP"
       - name: Create Release
         id: create_release
         uses: actions/create-release@latest
@@ -133,13 +143,12 @@ jobs:
             You should see the following output
 
             ```text
-            // TODO: Add `pack` output 
+            ${{ steps.pack_info.outputs.help }}
             ```
 
             ## Info
-            > TODO: Set lifecycle version 
 
-            Builders created with this release of the pack CLI continue to contain [lifecycle v0.6.1](https://github.com/buildpack/lifecycle/releases/tag/v0.6.1) by default.
+            Builders created with this release of the pack CLI continue to contain [lifecycle v${{ steps.pack_info.outputs.lifeycle_version }}](https://github.com/buildpack/lifecycle/releases/tag/v${{ steps.pack_info.outputs.lifeycle_version }}) by default.
 
             ## Features
 
@@ -153,7 +162,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./pack-darwin.tgz
-          asset_name: pack-${{ env.PACK_VERSION }}-darwin.tgz
+          asset_name: pack-v${{ env.PACK_VERSION }}-darwin.tgz
           asset_content_type: application/gzip
       - name: Upload Release Asset - linux
         uses: actions/upload-release-asset@v1
@@ -162,7 +171,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./pack-linux.tgz
-          asset_name: pack-${{ env.PACK_VERSION }}-linux.tgz
+          asset_name: pack-v${{ env.PACK_VERSION }}-linux.tgz
           asset_content_type: application/gzip
 #      - name: Upload Release Asset - windows
 #        uses: actions/upload-release-asset@v1
