@@ -63,7 +63,7 @@ jobs:
           name: pack-${{ matrix.os }}
           path: out/${{ env.PACK_BIN }}
   release:
-    needs: [test]
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Derive pack version from branch name
@@ -145,30 +145,30 @@ jobs:
             ## Fixes
 
             ## Breaking Changes
-    - name: Upload Release Asset - darwin
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./pack-darwin.tgz
-        asset_name: pack-${{ env.PACK_VERSION }}-darwin.tgz
-        asset_content_type: application/gzip
-    - name: Upload Release Asset - linux
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./pack-linux.tgz
-        asset_name: pack-${{ env.PACK_VERSION }}-linux.tgz
-        asset_content_type: application/gzip
-#    - name: Upload Release Asset - windows
-#      uses: actions/upload-release-asset@v1
-#      env:
-#        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#      with:
-#        upload_url: ${{ steps.create_release.outputs.upload_url }}
-#        asset_path: ./pack-windows.zip
-#        asset_name: pack-${{ env.PACK_VERSION }}-windows.tgz
-#        asset_content_type: application/zip
+      - name: Upload Release Asset - darwin
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./pack-darwin.tgz
+          asset_name: pack-${{ env.PACK_VERSION }}-darwin.tgz
+          asset_content_type: application/gzip
+      - name: Upload Release Asset - linux
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./pack-linux.tgz
+          asset_name: pack-${{ env.PACK_VERSION }}-linux.tgz
+          asset_content_type: application/gzip
+#      - name: Upload Release Asset - windows
+#        uses: actions/upload-release-asset@v1
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          upload_url: ${{ steps.create_release.outputs.upload_url }}
+#          asset_path: ./pack-windows.zip
+#          asset_name: pack-${{ env.PACK_VERSION }}-windows.tgz
+#          asset_content_type: application/zip
