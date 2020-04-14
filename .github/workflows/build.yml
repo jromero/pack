@@ -63,6 +63,7 @@ jobs:
           name: pack-${{ matrix.os }}
           path: out/${{ env.PACK_BIN }}
   release:
+    if: ${{ startsWith(github.ref, 'refs/heads/release') }}
     needs: test
     runs-on: ubuntu-latest
     steps:
@@ -99,12 +100,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: pack ${{ env.PACK_VERSION }}
+          tag_name: v${{ env.PACK_VERSION }}
+          release_name: pack v${{ env.PACK_VERSION }}
           draft: true
           prerelease: false
           body: |
-            # pack ${{ env.PACK_VERSION }}
+            # pack v${{ env.PACK_VERSION }}
             > This is a **beta** release of the Cloud Native Buildpack local CLI. This platform implementation should be relatively stable and reliable, but breaking changes in the underlying [specification](https://github.com/buildpack/spec) may be implemented without notice. Note that pack is intended for local image builds, and thus requires a Docker daemon. The [lifecycle](https://github.com/buildpack/lifecycle) should be used directly when building on cloud platforms.
 
             ## Prerequisites
